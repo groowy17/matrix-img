@@ -138,7 +138,7 @@ class Matrix extends Component {
         number: this.props.numberFromState - this.getCountInRow()
       });
 
-      this.scrollOnMid(this.props.numberFromState);
+      this.scrollVertical(this.props.numberFromState);
     } else if (
       event.keyCode === DOWN_CODE &&
       this.props.rowFromState <
@@ -152,7 +152,7 @@ class Matrix extends Component {
         number: this.props.numberFromState + this.getCountInRow()
       });
 
-      this.scrollOnMid(this.props.numberFromState);
+      this.scrollVertical(this.props.numberFromState);
     } else if (event.keyCode === LEFT_CODE && this.props.numberFromState > 0) {
       this.props.setActiveCard({
         active: true,
@@ -160,7 +160,8 @@ class Matrix extends Component {
         number: this.props.numberFromState - 1
       });
 
-      this.scrollOnMid(this.props.numberFromState);
+      this.scrollHorizontal(this.props.numberFromState);
+      this.checkNextCardAndScroll(this.props.numberFromState);
     } else if (
       event.keyCode === RIGHT_CODE &&
       this.props.numberFromState < this.state.images.length - 1
@@ -171,7 +172,8 @@ class Matrix extends Component {
         number: this.props.numberFromState + 1
       });
 
-      this.scrollOnMid(this.props.numberFromState);
+      this.scrollHorizontal(this.props.numberFromState);
+      this.checkNextCardAndScroll(this.props.numberFromState);
     } else if (event.keyCode === 27) {
       this.props.setActiveCard({
         active: false,
@@ -181,13 +183,10 @@ class Matrix extends Component {
     }
   };
 
-  scrollOnMid = number => {
+  scrollVertical = number => {
     let el = document.querySelector(`a[data-number="${number}"]`);
     let offsetTop = el.getBoundingClientRect().top;
-    let offsetLeft = el.getBoundingClientRect().left;
     let options = {};
-
-    el.focus();
 
     if (window.innerHeight - offsetTop < 400) {
       options["top"] = window.innerHeight / 2;
@@ -195,10 +194,38 @@ class Matrix extends Component {
       options["top"] = -1 * (window.innerHeight / 2);
     }
 
+    window.scrollBy({
+      ...options,
+      behavior: "smooth"
+    });
+  };
+
+  scrollHorizontal = number => {
+    let el = document.querySelector(`a[data-number="${number}"]`);
+    let offsetLeft = el.getBoundingClientRect().left;
+    let options = {};
+
     if (window.innerWidth - offsetLeft < 400) {
       options["left"] = window.innerWidth / 2;
     } else if (offsetLeft < 100) {
       options["left"] = -1 * (window.innerWidth / 2);
+    }
+
+    window.scrollBy({
+      ...options,
+      behavior: "smooth"
+    });
+  };
+
+  checkNextCardAndScroll = number => {
+    let options = {};
+
+    if (number % this.getCountInRow() === 0) {
+      options["left"] = -1 * this.matrixRef.current.scrollWidth;
+    }
+
+    if ((number + 1) % this.getCountInRow() === 0) {
+      options["left"] = this.matrixRef.current.scrollWidth;
     }
 
     window.scrollBy({
@@ -224,9 +251,7 @@ class Matrix extends Component {
 
   getCountInRow = () => {
     let width = this.matrixRef.current.getBoundingClientRect().width;
-
-    // TODO: width card in constant
-    let count = width / 266;
+    let count = width / (WIDTH_CARD + PADDING_CARD);
 
     return parseInt(count);
   };
